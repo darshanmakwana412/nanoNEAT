@@ -15,11 +15,11 @@ class Genome:
         self.node_genes = [0, 0, 0, 2, 1]
         
         """
-        Input node
-        Output node
-        Weight of the connection
-        Enabled/1
-        Ennovation
+        [0] -> Input node
+        [1] -> Output node
+        [2] -> Weight of the connection
+        [3] -> Enabled/1
+        [4] -> Innovation Number
         """
         self.connect_genes = [
             (0, 3, 0.7, 1, 1),

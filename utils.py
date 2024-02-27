@@ -1,5 +1,5 @@
 """
-Some of the main utilities for plotting the genome
+utilities for plotting the genome
 """
 
 import matplotlib.patches as patches
