@@ -101,7 +101,7 @@ def mutate_remove_neuron(genome: Genome):
 
     # Remove associated links
     links_to_remove = [
-        link for link in genome.links if ((link.input_id == neuron_to_remove.neuron_id) and (link.output_id == neuron_to_remove.neuron_id))
+        link for link in genome.links if ((link.input_id == neuron_to_remove.neuron_id) or (link.output_id == neuron_to_remove.neuron_id))
     ]
     for link in links_to_remove:
         genome.links.remove(link)

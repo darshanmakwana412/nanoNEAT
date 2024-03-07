@@ -1,8 +1,6 @@
-import math
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import animation
-from IPython.display import display, clear_output
+import numpy as np
+import math
 
 class SnakeEnv:
     def __init__(self, grid_size=(10, 10)):
@@ -34,13 +32,13 @@ class SnakeEnv:
         self.snake.insert(0, new_head)
 
         # Check for food consumption
+        reward = 0
         if new_head == self.food:
             self.score += 1
             self._place_food()
             reward = 1
         else:
             self.snake.pop()
-            reward = 0
 
         return self._get_observation(), reward, False, {}
     
@@ -70,54 +68,31 @@ class SnakeEnv:
                 obs[3] = 1
         
         return obs
-            
-        
-        
-#         # get the position of the unit y vector snake ref frame
-#         j_hat = (self.direction[0], -1 * self.direction[1])
-#         i_hat = (-1 * self.direction[1], -1 * self.direction[0])
-# # #         print(self.direction, self.snake[0], i_hat, j_hat)
-# #         print("snake head: ", self.snake[0])
-# #         print("snake dir: ", self.direction)
-#         obs = []
-#         for i in range(-5, 6):
-#             if i != 0:
-#                 pos = ( self.snake[0][0] + i * i_hat[0], self.snake[0][1] + i * i_hat[1])
-#                 if 0 <= pos[0] < self.grid_size[0] and 0 <= pos[1] < self.grid_size[1]:
-#                     if pos == self.food:
-#                         obs.append(1)
-#                     elif pos in self.snake:
-#                         obs.append(-1)
-#                     else:
-#                         obs.append(0)
-#                 else:
-#                     obs.append(-1)
-#         for i in range(-1, 2):
-#             pos = ( self.snake[0][0] + j_hat[0] + i * i_hat[0], self.snake[0][1] + j_hat[1] + i * i_hat[1])
-#             if 0 <= pos[0] < self.grid_size[0] and 0 <= pos[1] < self.grid_size[1]:
-#                 if pos == self.food:
-#                     obs.append(1)
-#                 elif pos in self.snake:
-#                     obs.append(-1)
-#                 else:
-#                     obs.append(0)
-#             else:
-#                 obs.append(-1)
-#         return np.array(obs)
 
-    def render(self):
-        fig, ax = plt.subplots(figsize=(5, 5))
+#     def _get_observation(self):
+
+#         pos = self.hat([self.food[0] - self.snake[0][0], self.food[1] - self.snake[0][1]])
+#         dirc = np.array(self.direction)
+
+#         obs = list(pos) + list(dirc)
+        
+#         return obs
+
+    def render_save(self, plot_path: str, ax=None):
+        
+        plt.cla()
+        if ax == None:
+            fig, ax = plt.subplots(figsize=(5, 5))
+        
         ax.set_xlim(0, self.grid_size[0])
         ax.set_ylim(0, self.grid_size[1])
-#         ax.set_xticks(range(self.grid_size[0]))
-#         ax.set_yticks(range(self.grid_size[1]))
-        ax.grid(False)
         plt.axis('off')
+        
         # Plot snake
         for part in self.snake:
             ax.add_patch(plt.Rectangle(part, 1, 1, color="green"))
+            
         # Plot food
-        ax.add_patch(plt.Rectangle(self.food, 1, 1, color="red"))
-#         display(fig)
-#         clear_output(wait=True)
-#         plt.close()
+        ax.add_patch(plt.Rectangle(self.food, 1, 1, color="red"))  
+        plt.tight_layout()
+        plt.savefig(plot_path)

@@ -22,7 +22,8 @@ def crossover_link(gene1: LinkGene, gene2: LinkGene) -> LinkGene:
     # Randomly choose the weights from either of the parents
     output_id = gene2.output_id
     weight = random.choice([gene1.weight, gene2.weight])
-    is_enabled = random.choice([gene1.is_enabled, gene2.is_enabled])
+#     is_enabled = random.choice([gene1.is_enabled, gene2.is_enabled])
+    is_enabled = gene1.is_enabled
     return LinkGene(input_id, output_id, weight, is_enabled)
 
 def crossover(dominant: Individual, recessive: Individual, genome_id: int) -> Genome:

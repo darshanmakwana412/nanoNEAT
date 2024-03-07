@@ -4,6 +4,11 @@ import numpy as np
 import random
 import math
 
+"""
+To Do:
+- [] Add support for cycle checking inside a genotype
+"""
+
 class Node:
     def __init__(self, node_id: int, ntype: str, bias: float, activation: str) -> None:
         self.node_id = node_id
@@ -12,12 +17,11 @@ class Node:
         self.activation = activation
         self.inputs = []
         self.outputs = []
-        self.value = None
         
-    def add_input(self, input_id, weight) -> None:
+    def add_input(self, input_id: int, weight: float) -> None:
         self.inputs.append((input_id, weight))
         
-    def add_output(self, output_id, weight) -> None:
+    def add_output(self, output_id: int, weight: float) -> None:
         self.outputs.append((output_id, weight))
 
 class Graph:
@@ -25,8 +29,11 @@ class Graph:
         
         self.genome = genome
         self.nodes = dict()
+#         print(genome)
+#         print(f"Printing genome: {genome.genome_id}")
         
         for n in genome.neurons:
+#             print(n.neuron_id)
             self.nodes[n.neuron_id] = Node(n.neuron_id, n.type, n.bias, n.activation)
             
         for link in genome.links:
@@ -35,47 +42,75 @@ class Graph:
             weight = link.weight
             
             if link.is_enabled:
+#                 print(input_id, output_id, weight)
                 self.nodes[input_id].add_output(output_id, weight)
                 self.nodes[output_id].add_input(input_id, weight)
+                
+    def _is_cyclic(self) -> bool:
+        
+        neuron_ids = [n.neuron_id for n in self.genome.neurons]
+
+        for nid in neuron_ids:
+            self.visited = {}
+            if nid not in self.visited:
+                if self.dfs(nid):
+                    return True
+            
+        return False
+    
+    def dfs(self, nid: int) -> bool:
+        node = self.nodes[nid]
+        self.visited[nid] = True
+        for (output_id, weight) in node.outputs:
+            if output_id not in self.visited:
+                self.dfs(output_id)
+            else:
+                return True
+        return False
             
     def forward(self, inputs: List[float], verbose: bool = False) -> List[float]:
         
         input_ids = self.genome.make_input_ids()
         output_ids = self.genome.make_output_ids()
         neurons = self.genome.neurons
-
-        neuron_queue = deque(input_ids)
+        self.values = {}
         
-        assert (len(inputs) == len(input_ids)), f"Size of input should match the size of input neurons in genome, Size of input: {len(inputs)}, Size of input neurons: {len(input_ids)}"
+        assert(len(inputs) == len(input_ids)), f"Size of input should match the size of input neurons in genome, Size of input: {len(inputs)}, Size of input neurons: {len(input_ids)}"
         
         for value, input_id in zip(inputs, input_ids):
-            self.nodes[input_id].value = value
-        
-        if verbose:
-            num_iter = 0
-            max_len = 0
+            self.values[input_id] = value
+
+        num_iter = 0
+        max_len = 0
+        neuron_queue = deque(input_ids)
         while len(neuron_queue):
-            
             nid = neuron_queue.popleft()
             node = self.nodes[nid]
             
             status = self.node_pass(node)
             
             for (output_id, weight) in node.outputs:
-                if self.nodes[output_id].value == None:
+                if output_id not in self.values:
                     neuron_queue.append(output_id)
                     
             if not status:
                 neuron_queue.append(nid)
             
-            if verbose:
-                max_len = max(max_len, len(neuron_queue))
-                num_iter += 1
+            max_len = max(max_len, len(neuron_queue))
+            num_iter += 1
+                
+            if num_iter > 100000:
+                print("Max length of the queue excedded")
+                break
             
         outputs = []
         for output_id in output_ids:
-            value = self.nodes[output_id].value
-            assert(value != None)
+            if output_id not in self.values:
+                print(self.values)
+                print(self.genome)
+                print("illegal forward pass")
+                print(output_ids)
+            value = self.values[output_id]
             outputs.append(value)
         
         if verbose:
@@ -85,18 +120,18 @@ class Graph:
         return outputs
             
     def node_pass(self, node):
-        
-        if node.type != "input" and node.value == None:
+        # check if the neuron has already been computed or is an input neuron
+        if node.type != "input" and node.node_id not in self.values:
             
             value = 0
             for (input_id, weight) in node.inputs:
-                input_value = self.nodes[input_id].value
-                if input_value == None:
+                if input_id not in self.values:
                     return False
+                input_value = self.values[input_id]
                 value += input_value * weight
             value += node.bias
             value = self.activate(value, node.activation)
-            node.value = value
+            self.values[node.node_id] = value
             
         return True
                     

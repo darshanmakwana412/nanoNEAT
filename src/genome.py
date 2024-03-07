@@ -59,3 +59,5 @@ class Individual:
     def __init__(self, genome: Genome, fitness: float) -> None:
         self.genome = genome
         self.fitness = fitness
+        self.parent1_genome = None
+        self.parent2_genome = None

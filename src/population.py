@@ -2,10 +2,12 @@ import matplotlib.pyplot as plt
 from .genome import *
 from .mutation import *
 from .crossover import *
+from .graph import *
 from typing import List
 from tqdm import tqdm
 import random
 import copy
+import os
 
 """
 To Do
@@ -45,19 +47,28 @@ class Population:
     def run(self) -> Individual:
         
         self.history = []
+        fig, ax = plt.subplots(figsize=(5, 5))
         
         pbar = tqdm(range(self.config.num_generations))
-        for _ in pbar:
+        for generation_id in pbar:
             
-            info = self.config.compute_fitness(self.individuals)
+            info = self.config.compute_fitness(self.individuals, generation_id, ax)
+            
             avg_score = info["avg_scores"]
+            scores = info["scores"]
             pbar.set_description(f"Avg Score: {avg_score}")
-#             self.update_best()
+            
+            idx, max_score = max(enumerate(scores), key=lambda x: x[1])
+            best_individual = self.individuals[idx]
+
             self.individuals = self.reproduce()
     
             self.history.append(info)
         
-        return self.individuals
+        if self.config.plot_info:
+            self.plot_info()
+        
+        return best_individual
     
     def reproduce(self) -> List[Individual]:
         
@@ -68,20 +79,29 @@ class Population:
         
         new_generation = []
         spawn_size = self.config.population_size
+        
         while spawn_size >= 0:
-            
+    
             parent1 = random.choice(old_members)
             parent2 = random.choice(old_members)
 
             offspring = crossover(copy.deepcopy(parent1), copy.deepcopy(parent2), self.next_genome_id())
-#             self.mutate(offspring)
-            new_generation.append(Individual(offspring, self.config.kFitnessNotComputed))
-            
-            spawn_size -= 1
+            offspring.parent1_genome = parent1.genome
+            offspring.parent2_genome = parent2.genome
+            self.mutate(offspring)
+#             print(parent1.genome)
+#             print(parent2.genome)
+            network = Graph(offspring)
+
+            if not network._is_cyclic():
+
+                new_generation.append(Individual(offspring, self.config.kFitnessNotComputed))
+
+                spawn_size -= 1
         
         return new_generation
     
-    def mutate(self, genome: Genome):
+    def mutate(self, genome: Genome) -> None:
         
         if random.random() < self.config.prob_add_link:
             mutate_add_link(genome, self.new_value())
@@ -109,26 +129,29 @@ class Population:
     def clamp(self, x):
         return min(self.config.max, max(self.config.min, x))
     
-    def plot(self):
+    def plot_info(self):
+        
         max_scores = [info["max_scores"] for info in self.history]
         avg_scores = [info["avg_scores"] for info in self.history]
         min_scores = [info["min_scores"] for info in self.history]
-        
-        # Creating a figure and a set of subplots
-        fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+        generations = [i for i in range(1, len(max_scores) + 1)]
 
-        # Plotting on each subplot
-        axs[0].plot(max_scores)
-        axs[0].set_title('Max Score vs Generation')
+        # Create the directory if it does not exist
+        output_dir = os.path.join(self.config.output_dir, self.config.exp_name)
+        os.makedirs(output_dir, exist_ok=True)
 
-        axs[1].plot(avg_scores)
-        axs[1].set_title('Avg Score vs Generation')
+        # Save the plot to the specified path
+        plt.figure(figsize=(10, 6))
+        plt.plot(generations, max_scores, label='Max Score', marker='o')
+        plt.plot(generations, avg_scores, label='Avg Score', marker='s')
+        plt.plot(generations, min_scores, label='Min Score', marker='^')
 
-        # For tan(x), limiting the y-axis due to the function's asymptotic nature
-        axs[2].plot(min_scores)
-        axs[2].set_title('Min Score vs Generation')
-
-        # Adjusting layout to prevent overlap
+        plt.title('Score vs Generation')
+        plt.xlabel('Generation')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
         plt.tight_layout()
 
-        plt.show()
+        plot_path = os.path.join(output_dir, "info.png")
+        plt.savefig(plot_path)
