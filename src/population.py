@@ -88,7 +88,7 @@ class Population:
             offspring = crossover(copy.deepcopy(parent1), copy.deepcopy(parent2), self.next_genome_id())
             offspring.parent1_genome = parent1.genome
             offspring.parent2_genome = parent2.genome
-            self.mutate(offspring)
+#             self.mutate(offspring)
 #             print(parent1.genome)
 #             print(parent2.genome)
             network = Graph(offspring)
@@ -131,10 +131,10 @@ class Population:
     
     def plot_info(self):
         
-        max_scores = [info["max_scores"] for info in self.history]
+#         max_scores = [info["max_scores"] for info in self.history]
         avg_scores = [info["avg_scores"] for info in self.history]
-        min_scores = [info["min_scores"] for info in self.history]
-        generations = [i for i in range(1, len(max_scores) + 1)]
+#         min_scores = [info["min_scores"] for info in self.history]
+        generations = [i for i in range(1, len(avg_scores) + 1)]
 
         # Create the directory if it does not exist
         output_dir = os.path.join(self.config.output_dir, self.config.exp_name)
@@ -142,13 +142,13 @@ class Population:
 
         # Save the plot to the specified path
         plt.figure(figsize=(10, 6))
-        plt.plot(generations, max_scores, label='Max Score', marker='o')
-        plt.plot(generations, avg_scores, label='Avg Score', marker='s')
-        plt.plot(generations, min_scores, label='Min Score', marker='^')
+#         plt.plot(generations, max_scores, label='Max Score', marker='o')
+        plt.plot(generations, avg_scores, label='Reward', marker='s')
+#         plt.plot(generations, min_scores, label='Min Score', marker='^')
 
-        plt.title('Score vs Generation')
-        plt.xlabel('Generation')
-        plt.ylabel('Score')
+        plt.title('Reward at inference')
+        plt.xlabel('iter')
+        plt.ylabel('Reward')
         plt.legend()
         plt.grid(True)
         plt.tight_layout()

@@ -17,8 +17,8 @@ class Config:
         self.animate = False
         
         # simulation params
-        self.population_size = 100
-        self.num_generations = 100
+        self.population_size = 25
+        self.num_generations = 50
         self.survival_threshold = 0.1
         self.max_episode_length = 100000
         
